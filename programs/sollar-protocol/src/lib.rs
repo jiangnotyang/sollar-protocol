@@ -8,7 +8,6 @@ pub mod sollar_protocol {
     pub fn initialize(ctx: Context<Initialize>) -> ProgramResult {
         
         msg!("hello world");
-        msg!("testing123");
         Ok(())
     }
 }
