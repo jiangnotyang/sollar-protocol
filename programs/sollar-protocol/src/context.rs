@@ -1,19 +1,20 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use crate::state::State;
+use crate::structs::State;
 
 #[derive(Accounts)]
 #[instruction(
     state_nonce: u8,
 )]
-pub struct InitializeProgramState<'info> {
+pub struct InitializeProgram<'info> {
     #[account(
         init,
         payer = admin,
-        seeds = [b"state".as_ref()],
+        seeds = [b"program_state".as_ref()],
         bump = state_nonce,
     )]
     pub state: Box<Account<'info, State>>,
+    pub admin: Signer<'info>,
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>,
@@ -23,19 +24,22 @@ pub struct InitializeProgramState<'info> {
 #[instruction(
     vault_nonce: u8
 )]
-pub struct InitializeVault<'info>{
-    pub admin: AccountInfo<'info>,
-    #[account(
-        init,
-        payer = admin,
-        seeds = [vault_mint.key.as_ref()],
-        bump = vault_nonce,
-        token::mint = vault_mint,
-        token::authority = admin,
-    )]
-    pub vault: Box<Account<'info, TokenAccount>>,
+pub struct InitializeDepositVault<'info>{
+    pub authority: AccountInfo<'info>,
+    #[account(signer)]
+    pub vault: Account<'info, Vault>,
+    #[account(mut)]
     pub vault_mint: Account<'info, Mint>,
-    pub system_program: Program<'info, System>,
-    pub token_program: Program<'info, Token>,
-    // Todo 
+    pub token_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct DepositAssetsMintBond<'info>{
+
+}
+
+impl<'info> DepositAssetsMintBond<'info>{
+    fn mint_bond_context(&self) -> CpiContext<'_,'_, '_, 'info, Mint<'info>> {
+
+    }
 }
