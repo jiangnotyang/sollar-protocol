@@ -43,7 +43,7 @@ pub struct InitializeProgramState<'info> {
         bump = state_nonce,
         payer = admin,
     )]
-    pub state: Box<Account<'info, State>,
+    pub state: Box<Account<'info, State>>,
     pub vault_mint: Account<'info, Mint>,
     pub authority: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
