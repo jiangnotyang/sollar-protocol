@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount};
 use errors::ErrorCode;
 use context::*;
 
@@ -14,8 +13,6 @@ pub mod sollar_protocol {
     use super::*;
     pub fn initialize_program_state(
         ctx: Context<InitializeProgramState>,
-        _program_vault_nonce: u8,
-        _state_nonce: u8,
     ) -> ProgramResult {
 
         if ctx.accounts.state.is_initialized {
@@ -23,6 +20,14 @@ pub mod sollar_protocol {
         }
 
         msg!("Hello world");
+        Ok(())
+    }
+
+    pub fn initialize_vault(
+        ctx: Context<InitializeVault>,
+        _vault_nonce: u8,
+    ) -> ProgramResult {
+        // To do
         Ok(())
     }
 }
