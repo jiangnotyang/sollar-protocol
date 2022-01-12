@@ -1,5 +1,11 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
+use errors::ErrorCode;
+use context::*;
+
+pub mod context;
+pub mod errors;
+pub mod state;
 
 declare_id!("HJXZKYVgk69LLGLEp8tFiUWi6AZ6z4VCNZgTudHMxk2t");
 
@@ -19,41 +25,4 @@ pub mod sollar_protocol {
         msg!("Hello world");
         Ok(())
     }
-}
-
-#[derive(Accounts)]
-#[instruction(
-    vault_nonce: u8,
-    state_nonce: u8,
-)]
-pub struct InitializeProgramState<'info> {
-    pub admin: Signer<'info>,
-    #[account(
-        init,
-        seeds = [b"program_vault".as_ref()],
-        bump = vault_nonce,
-        payer = admin,
-        token::mint = vault_mint,
-        token::authority = authority,
-    )]
-    pub vault_account: Box<Account<'info, TokenAccount>>,
-    #[account(
-        init, 
-        seeds = [b"program_state".as_ref()],
-        bump = state_nonce,
-        payer = admin,
-    )]
-    pub state: Box<Account<'info, State>>,
-    pub vault_mint: Account<'info, Mint>,
-    pub authority: AccountInfo<'info>,
-    pub system_program: Program<'info, System>,
-    pub token_program: Program<'info, Token>,
-}
-
-
-#[account]
-pub struct State {
-    pub admin: Pubkey,
-    pub is_initialized: bool,
-
 }
