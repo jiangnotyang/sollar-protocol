@@ -8,7 +8,8 @@ pub enum ErrorCode{
     ProgramAlreadyInitialized,
 
     #[msg("Vault authority is invalid")]
-    InvalidVaultAuthority
+    InvalidVaultAuthority,
 
+    VaultNotInitialized,
 
 }

@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
-use crate::structs::State;
+use crate::structs::{State, Vault};
 
 #[derive(Accounts)]
 #[instruction(
@@ -30,16 +30,17 @@ pub struct InitializeDepositVault<'info>{
     pub vault: Account<'info, Vault>,
     #[account(mut)]
     pub vault_mint: Account<'info, Mint>,
+    #[account(mut)]
+    pub vault_mint_account: Account<'info, TokenAccount>,
     pub token_program: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
-pub struct DepositAssetsMintBond<'info>{
-
+pub struct MintBond<'info>{
+    pub vault: Box<Account<'info, Vault>>,
+    
 }
 
-impl<'info> DepositAssetsMintBond<'info>{
-    fn mint_bond_context(&self) -> CpiContext<'_,'_, '_, 'info, Mint<'info>> {
+impl<'info> MintBond<'info>{
 
-    }
 }

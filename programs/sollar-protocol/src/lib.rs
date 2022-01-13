@@ -13,7 +13,7 @@ pub mod sollar_protocol {
     use super::*;
 
     // What needs to be initialized except for the deposit vaults
-    // A circuit breaker?
+    // a circuit breaker?
     pub fn initialize_program(
         ctx: Context<InitializeProgram>,
         _state_nonce: u8,
@@ -37,28 +37,42 @@ pub mod sollar_protocol {
         );
 
         let seeds = &[
-            &ctx.accounts.vault_mint.to_account_info.key.to_bytes(),
+            &ctx.accounts.vault_mint.to_account_info().key.to_bytes(),
             &[vault_bump_seed][..],
         ];
 
         if *ctx.accounts.authority.key !=  vault_authority {
             return Err(ErrorCode::InvalidVaultAuthority.into());
         }
-
+        
         let vault = &mut ctx.accounts.vault;
         vault.is_initialized = true;
         vault.vault_bump = vault_bump_seed;
         vault.vault_mint = *ctx.accounts.vault_mint.to_account_info().key;
         vault.authority = *ctx.accounts.authority.key;
-        vault.token_program_id = *ctx.accounts.token_program_id.key;
 
         Ok(())
     }
 
-    pub fn deposit_assets_mint_bond(
-        ctx: Context<DepositAssetsMintBond>
+    // Mint a bond based the specific vault mint of the deposited asset
+    // & maturity date of the option. Option quotes are grabbed from client side
+    // and double checked via IOC Limit order on serum orderbook
+
+    // Big ass function
+    pub fn mint_bond(
+        ctx: Context<MintBond>
     ) -> ProgramResult {
-        // Todo
+        let vault = &mut ctx.accounts.vault;
+
+        if !(vault.is_initialized) {
+            return Err(ErrorCode::VaultNotInitialized.into());
+        }
+        
+
+        
+
         Ok(())
     }
 }
+
+
