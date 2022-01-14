@@ -1,4 +1,4 @@
-[programs.devnet]
+[programs.localhost]
 sollar_protocol = "133UvExsEqA1phGRHUgDP2RJQrcPzZSpGgvTrbtD8DbR"
 psy_american = "R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs"
 
@@ -6,7 +6,7 @@ psy_american = "R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs"
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "devnet"
+cluster = "localhost"
 wallet = "/Users/guanzhi2/.config/solana/id.json"
 
 [scripts]

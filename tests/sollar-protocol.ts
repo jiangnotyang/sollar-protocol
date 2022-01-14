@@ -39,8 +39,8 @@ let optionMarket: OptionMarketV2;
 
 // Global Dex Variables
 let marketProxy: MarketProxy;
-let wrappedBtcMint = new PublicKey("C6kYXcaRUMqeBF5fhg165RWU7AnpT9z92fvKNoMqjmz6");
-let officialUsdcMint = new PublicKey("E6Z6zLzk8MWY3TY8E87mr88FhGowEPJTeMWzkqtL6qkF");
+// let wrappedBtcMint = new PublicKey("C6kYXcaRUMqeBF5fhg165RWU7AnpT9z92fvKNoMqjmz6");
+// let officialUsdcMint = new PublicKey("E6Z6zLzk8MWY3TY8E87mr88FhGowEPJTeMWzkqtL6qkF");
 
 let optionMarketKey: PublicKey;
 let bumpSeed: number;
@@ -48,33 +48,64 @@ let underlyingAmountPerContract = new anchor.BN("1000000000");
 let quoteAmountPerContract = new anchor.BN("5200000");
 let expiration = new anchor.BN("1642863600");
 
+let underlyingTokenMint: Token;
+let quoteTokenMint: Token;
+const textEncoder = new TextEncoder();
+const owner = anchor.web3.Keypair.generate();
+const mintAuthority = anchor.web3.Keypair.generate();
+
+
 describe('sollar-protocol', () => {
 
-  // Configure the client to use the local cluster.
   anchor.setProvider(anchor.Provider.env());
   const provider = anchor.Provider.env();
   const program = anchor.workspace.SollarProtocol as Program<SollarProtocol>;
   const psyAmericanProgram = anchor.workspace.PsyAmerican;
 
-  console.log(psyAmericanProgram);
-  const owner = anchor.web3.Keypair.generate();
-  const payer = anchor.web3.Keypair.generate();
+  it('Initializes option market', async () => {
+    const sig = await provider.connection.requestAirdrop(owner.publicKey, 10000000000);
+    await provider.connection.confirmTransaction(
+      sig,
+      "singleGossip"
+    );
+    
+    // create underlying and quote token and mints
+    underlyingTokenMint = await Token.createMint(
+      provider.connection,
+      owner,
+      mintAuthority.publicKey,
+      null,
+      0,
+      TOKEN_PROGRAM_ID
+    );
 
-  it('Finds option market key for BTC/USDC Jan 22, 2022', async () => {
+    quoteTokenMint = await Token.createMint(
+      provider.connection,
+      owner, 
+      mintAuthority.publicKey,
+      null,
+      0,
+      TOKEN_PROGRAM_ID
+    );
+
+    
+    //find PDA option market key
     [optionMarketKey, bumpSeed] = await anchor.web3.PublicKey.findProgramAddress(
       [
-        wrappedBtcMint.toBuffer(),
-        officialUsdcMint.toBuffer(),
+        underlyingTokenMint.publicKey.toBuffer(),
+        quoteTokenMint.publicKey.toBuffer(),
         underlyingAmountPerContract.toBuffer("le", 8),
         quoteAmountPerContract.toBuffer("le", 8),
         expiration.toBuffer("le", 8)
       ],
-      psyoptionsProgramId
+      psyAmericanProgram.programId,
     );
-    console.log(optionMarketKey, bumpSeed);
-  });
 
-  it('play around with option order book', async () => {
-   
+    //find option mint key
+    const [optionMintKey, optionMintBump] = await anchor.web3.PublicKey.findProgramAddress(
+      [optionMarketKey.toBuffer(), textEncoder.encode("optionToken")],
+      psyAmericanProgram.programId,
+    )
+
   })
 });
