@@ -1,12 +1,14 @@
 use anchor_lang::prelude::*;
 use errors::ErrorCode;
 use context::*;
+use psy_american::program::PsyAmerican;
+use psy_american::instruction::InitializeMarket;
 
 pub mod context;
 pub mod errors;
 pub mod structs;
 
-declare_id!("HJXZKYVgk69LLGLEp8tFiUWi6AZ6z4VCNZgTudHMxk2t");
+declare_id!("133UvExsEqA1phGRHUgDP2RJQrcPzZSpGgvTrbtD8DbR");
 
 #[program]
 pub mod sollar_protocol {
@@ -58,16 +60,15 @@ pub mod sollar_protocol {
     // & maturity date of the option. Option quotes are grabbed from client side
     // and double checked via IOC Limit order on serum orderbook
 
-    // Big ass function
+    // 
     pub fn mint_bond(
-        ctx: Context<MintBond>
+        ctx: Context<MintBond>,
     ) -> ProgramResult {
         let vault = &mut ctx.accounts.vault;
 
         if !(vault.is_initialized) {
             return Err(ErrorCode::VaultNotInitialized.into());
         }
-        
 
         
 

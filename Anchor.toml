@@ -1,12 +1,13 @@
-[programs.localnet]
-sollar_protocol = "HJXZKYVgk69LLGLEp8tFiUWi6AZ6z4VCNZgTudHMxk2t"
+[programs.devnet]
+sollar_protocol = "133UvExsEqA1phGRHUgDP2RJQrcPzZSpGgvTrbtD8DbR"
+psy_american = "R2y9ip6mxmWUj4pt54jP2hz2dgvMozy9VTSwMWE7evs"
 
 [registry]
 url = "https://anchor.projectserum.com"
 
 [provider]
-cluster = "localnet"
-wallet = "/Users/guanzhi2/sollar-protocol/target/deploy/sollar_protocol-keypair.json"
+cluster = "devnet"
+wallet = "/Users/guanzhi2/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
