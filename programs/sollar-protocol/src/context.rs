@@ -1,6 +1,8 @@
+
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token, TokenAccount};
+use anchor_spl::token::{self, Mint, TokenAccount, Transfer, Token};
 use crate::structs::{State, Vault};
+
 
 #[derive(Accounts)]
 #[instruction(
@@ -45,6 +47,7 @@ pub struct MintBond<'info>{
 #[derive(Accounts)]
 pub struct InitOptionMarket<'info> {
     // Sollar protocol admin wallet
+    #[account(mut)]
     pub user: Signer<'info>,
     pub psy_american_program: AccountInfo<'info>,
 
@@ -69,6 +72,4 @@ pub struct InitOptionMarket<'info> {
     pub rent: Sysvar<'info, Rent>,
     pub system_program: AccountInfo<'info>,
     pub clock: Sysvar<'info, Clock>
-
-
 }

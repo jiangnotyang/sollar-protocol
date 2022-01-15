@@ -1127,6 +1127,7 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "psy_american",
+ "solana-program",
 ]
 
 [[package]]

@@ -20,12 +20,12 @@ import {
   Transaction,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { getOrAddAssociatedTokenAccountTx } from "../packages/psyoptions-ts/src";
+import { getOrAddAssociatedTokenAccountTx } from "../psyoptions-ts/src";
 import {
   feeAmountPerContract,
   FEE_OWNER_KEY,
-} from "../packages/psyoptions-ts/src/fees";
-import { OptionMarketV2 } from "../packages/psyoptions-ts/src/types";
+} from "../psyoptions-ts/src/fees";
+import { OptionMarketV2 } from "../psyoptions-ts/src/types";
 
 export const wait = (delayMS: number) =>
   new Promise((resolve) => setTimeout(resolve, delayMS));
@@ -404,8 +404,8 @@ export const initSetup = async (
     opts.expiration || new anchor.BN(new Date().getTime() / 1000 + 3600);
   let optionMarketKey: PublicKey;
   let bumpSeed: number;
-  let mintFeeKey = new Keypair().publicKey;
-  let exerciseFeeKey = new Keypair().publicKey;
+  let mintFeeKey = anchor.web3.Keypair.generate().publicKey;
+  let exerciseFeeKey = anchor.web3.Keypair.generate().publicKey;
   let remainingAccounts: AccountMeta[] = [];
   let instructions: TransactionInstruction[] = [];
   ({ underlyingToken, quoteToken } = await createUnderlyingAndQuoteMints(
