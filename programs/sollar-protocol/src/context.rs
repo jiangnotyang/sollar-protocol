@@ -99,7 +99,7 @@ pub struct InitProgramVaults<'info> {
 
 #[derive(Accounts)]
 pub struct MintCtx<'info> {
-    #[account(mut)]
+    #[account(mut, signer)]
     pub authority: AccountInfo<'info>,
     pub psy_american_program: AccountInfo<'info>,
     #[account(mut)]
