@@ -48,11 +48,20 @@ const mintAuthority = anchor.web3.Keypair.generate();
 let optionMarket: OptionMarketV2;
 let underlyingToken: Token;
 let quoteToken: Token;
-let optionMarketKey: PublicKey;
 let remainingAccounts: AccountMeta[] = [];
 let instructions: TransactionInstruction[] = [];
+let optionMarketKey: PublicKey;
+let underLyingAmountPerContract: anchor.BN;
+let quoteAmountPerContract: anchor.BN;
+let opts: {};
 
-describe('sollar-protocol', () => {
+let vault: PublicKey;
+let vaultAuthority: PublicKey;
+let _vaultBump;
+let _vaultAuthorityBump;
+
+
+describe('init option market and mint', () => {
 
   anchor.setProvider(anchor.Provider.env());
   const provider = anchor.Provider.env();
@@ -71,7 +80,7 @@ describe('sollar-protocol', () => {
       sig2,
       "singleGossip"
     );
-
+    // Set up the option market params according to initsetup 
     ({
       instructions,
       optionMarket,
@@ -83,7 +92,7 @@ describe('sollar-protocol', () => {
       provider,
       payer, 
       owner,
-      psyAmericanProgram
+      psyAmericanProgram,
     ))
   })
   
@@ -154,5 +163,40 @@ describe('sollar-protocol', () => {
       onChainOptionMarket.expired?.toString(),
       optionMarket.expired.toString(),
     )
-  })
+  });
+
+  it("Initializes a mint option asset vault", async () => {
+    [vault, _vaultBump] = await anchor.web3.PublicKey.findProgramAddress(
+      [underlyingToken.publicKey.toBuffer(), textEncoder.encode("vault")],
+      program.programId,
+    );
+
+    [vaultAuthority, _vaultAuthorityBump] = await anchor.web3.PublicKey.findProgramAddress(
+      [underlyingToken.publicKey.toBuffer(), textEncoder.encode("vaultAuthority")],
+      program.programId
+    );
+
+    await program.rpc.initProgramVaults({
+      accounts: {
+        authority: payer.publicKey,
+        optionUnderlyingAsset: underlyingToken.publicKey,
+        mintOptionAssetVault: vault,
+        mintOptionAssetVaultAuthority: vaultAuthority,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        rent: SYSVAR_RENT_PUBKEY,
+        systemProgram: SystemProgram.programId,
+      },
+      signers: [payer]
+    });
+  });
+  describe("deposit funds into the program mint option asset vault", () => {
+    it("should create a token account owned by program for option minting", async() => {
+      await underlyingToken.mintTo(vault, owner, [], 10000000000);
+      const vaultAccount = await underlyingToken.getAccountInfo(vault);
+      console.log(vaultAccount.amount.toNumber());
+
+    });
+  });
+
 });
+
