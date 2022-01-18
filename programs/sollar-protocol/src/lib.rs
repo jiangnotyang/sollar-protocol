@@ -1,9 +1,12 @@
 use anchor_lang::prelude::*;
+use anchor_spl::dex::serum_dex::instruction::NewOrderInstructionV1;
 use errors::ErrorCode;
 use anchor_lang::InstructionData;
 use context::*;
 use psy_american::program::PsyAmerican;
 use psy_american::cpi::accounts::{ExerciseOption, MintOptionV2};
+use anchor_spl::dex::serum_dex;
+use anchor_spl::dex::serum_dex::{instruction::SelfTradeBehavior as SerumSelfTradeBehavior, matching::{OrderType as SerumOrderType, Side as SerumSide}};
 use psy_american::OptionMarket;
 use psy_american::instruction::InitializeMarket;
 
@@ -12,6 +15,54 @@ pub mod errors;
 pub mod structs;
 
 declare_id!("GGctambdwXbK5VnbLkyR9xfn3gvJgZVE4yfxQVCkkh5t");
+
+#[derive(Debug, AnchorDeserialize, AnchorSerialize)]
+pub enum SelfTradeBehaviour {
+    DecrementTake = 0,
+    CancelProvide = 1,
+    AbortTransaction = 2,
+}
+
+impl From<SelfTradeBehaviour> for SerumSelfTradeBehavior {
+    fn from(self_trade_behave: SelfTradeBehaviour) -> SerumSelfTradeBehavior {
+        match self_trade_behave {
+            SelfTradeBehaviour::DecrementTake => SerumSelfTradeBehavior::DecrementTake,
+            SelfTradeBehaviour::CancelProvide => SerumSelfTradeBehavior::CancelProvide,
+            SelfTradeBehaviour::AbortTransaction => SerumSelfTradeBehavior::AbortTransaction,
+        }
+    }
+}
+
+#[derive(Debug, AnchorSerialize, AnchorDeserialize)]
+pub enum NewSide{
+    Bid,
+    Ask,
+}
+
+impl From<NewSide> for SerumSide {
+    fn from(side: NewSide) -> SerumSide {
+        match side {
+            NewSide::Bid => SerumSide::Bid,
+            NewSide::Ask => SerumSide::Ask,
+        }
+    }
+}
+
+#[derive(Debug, AnchorSerialize, AnchorDeserialize)]
+pub enum OrderType {
+    Limit = 0,
+    ImmediateOrCancel = 1,
+    PostOnly = 2,
+}
+impl From<OrderType> for SerumOrderType {
+    fn from(order_type: OrderType) -> SerumOrderType {
+        match order_type {
+            OrderType::Limit => SerumOrderType::Limit,
+            OrderType::ImmediateOrCancel => SerumOrderType::ImmediateOrCancel,
+            OrderType::PostOnly => SerumOrderType::PostOnly,
+        }
+    }
+}
 
 #[program]
 pub mod sollar_protocol {
@@ -136,6 +187,7 @@ pub mod sollar_protocol {
 
         solana_program::program::invoke(&ix, &account_infos)
     }
+
     
     // Init option underlying asset mint vault, and Sollar bond vault
     // Currently only init the option asset mint vault but TODO as adding deposit 
@@ -178,7 +230,7 @@ pub mod sollar_protocol {
 
         let seeds = &[
             key.as_ref(),
-            b"vaultAuthority",
+            b"orderVaultAuthority",
             &[vault_authority_bump]
         ];
 
@@ -187,7 +239,55 @@ pub mod sollar_protocol {
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         psy_american::cpi::mint_option_v2(cpi_ctx, size)
     }
+    // new order vault for option order to be used for place order later.
+    pub fn init_order_vault(_ctx: Context<InitOrderVault>) -> ProgramResult{
+        Ok(())
+    }
 
+    // place order for option
+    pub fn place_order(
+        ctx: Context<PlaceOrder>,
+        vault_authority_bump: u8,
+        open_order_bump: u8,
+        open_order_bump_init: u8,
+        side: NewSide,
+        limit_price: u64,
+        max_coin_qty: u64,
+        order_type: OrderType,
+        client_order_id: u64,
+        self_trade_behaviour: SelfTradeBehaviour,
+        limit: u16,
+        max_native_pc_qty_including_fees: u64,
+    ) -> ProgramResult {
+        let cpi_program = ctx.accounts.psy_american_program.clone();
+        //create new open order account if open_orders account is empty
+        if ctx.accounts.open_orders.data_is_empty() {
+            solana_program::program::invoke(
+                &solana_program::system_instruction::transfer(
+                    &ctx.accounts.user_authority.key,
+                    &ctx.accounts.vault_authority.key,
+                    23357760
+                ),
+                &[
+                    ctx.accounts.user_authority.to_account_info(),
+                    ctx.accounts.vault_authority.to_account_info(),
+                    ctx.accounts.system_program.to_account_info(),
+                ],
+            )?;
+
+            let mut ix = serum_dex::instruction::init_open_orders (
+                &ctx.accounts.dex_program.key,
+                ctx.accounts.open_orders.key,
+                ctx.accounts.vault_authority.key,
+                ctx.accounts.market.key,
+                Some(ctx.accounts.psy_market_authority.key),
+            )?;
+            ix.program_id = *cpi_program.key;
+            msg!("ix program info {:?}", ix);
+            
+        }
+        Ok(())
+    }
 }
 
 

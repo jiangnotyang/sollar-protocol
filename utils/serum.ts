@@ -24,9 +24,9 @@ import {
 } from "@solana/web3.js";
 import * as serumCmn from "@project-serum/common";
 import { Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { OptionMarketV2 } from "../packages/psyoptions-ts/src/types";
+import { OptionMarketV2 } from "../psyoptions-ts/src/types"
 
-const MARKET_MAKER = new Keypair();
+const MARKET_MAKER = anchor.web3.Keypair.generate();
 export const DEX_PID = new PublicKey(
   "9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin"
 );
@@ -182,9 +182,9 @@ export const createFirstSetOfAccounts = async ({
   wallet: anchor.Wallet;
   dexProgramId: PublicKey;
 }) => {
-  const eventQueue = new Keypair();
-  const bids = new Keypair();
-  const asks = new Keypair();
+  const eventQueue = anchor.web3.Keypair.generate();
+  const bids = anchor.web3.Keypair.generate();
+  const asks = anchor.web3.Keypair.generate();
 
   const tx2 = new Transaction();
   tx2.add(

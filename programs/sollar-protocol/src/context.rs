@@ -129,3 +129,68 @@ pub struct MintCtx<'info> {
     pub rent: Sysvar<'info, Rent>,
     pub system_program: AccountInfo<'info>,
 }
+
+#[derive(Accounts)]
+pub struct InitOrderVault<'info> {
+    #[account(mut)]
+    authority: Signer<'info>,
+    usdc_mint: Box<Account<'info, Mint>>,
+    #[account(
+        init, 
+        seeds = [&usdc_mint.key().to_bytes()[..], b"vault"],
+        bump,
+        payer = authority, 
+        token::mint = usdc_mint,
+        token::authority = vault_authority
+    )]
+    pub vault: Box<Account<'info, TokenAccount>>,
+    pub vault_authority: AccountInfo<'info>,
+
+    pub token_program: AccountInfo<'info>,
+    pub rent: Sysvar<'info, Rent>,
+    pub system_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
+pub struct PlaceOrder<'info>{
+    #[account(mut)]
+    pub user_authority: Signer<'info>,
+    pub psy_american_program: AccountInfo<'info>,
+    pub dex_program: AccountInfo<'info>,
+
+    #[account(mut)]
+    pub open_orders: AccountInfo<'info>,
+
+    // The Serum market
+    #[account(mut)]
+    pub market: AccountInfo<'info>,
+    
+    // Serum Market market authority
+    pub psy_market_authority: AccountInfo<'info>,
+
+    // USDC vault Account
+    #[account(mut)]
+    vault: Box<Account<'info, TokenAccount>>,
+
+    #[account(mut)]
+    pub vault_authority: AccountInfo<'info>,
+
+    #[account(mut)]
+    request_queue: AccountInfo<'info>,
+    #[account(mut)]
+    event_quene: AccountInfo<'info>,
+    #[account(mut)]
+    pub market_bids: AccountInfo<'info>,
+    #[account(mut)]
+    pub market_asks: AccountInfo<'info>,
+    #[account(mut)]
+    pub coin_vault: AccountInfo<'info>,
+    #[account(mut)]
+    pub pc_vault: AccountInfo<'info>,
+
+    pub system_program: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+    pub rent: Sysvar<'info, Rent>,
+
+
+}
