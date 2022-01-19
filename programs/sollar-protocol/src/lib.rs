@@ -4,7 +4,6 @@ use anchor_spl::token::{self, Transfer};
 use errors::ErrorCode;
 use anchor_lang::InstructionData;
 use context::*;
-use psy_american::program::PsyAmerican;
 use psy_american::cpi::accounts::{ExerciseOption, MintOptionV2};
 use anchor_spl::dex::serum_dex;
 use anchor_spl::dex::serum_dex::{instruction::SelfTradeBehavior as SerumSelfTradeBehavior, matching::{OrderType as SerumOrderType, Side as SerumSide}};
@@ -79,46 +78,14 @@ pub mod sollar_protocol {
         Ok(())
     }
 
-    // Each asset (SPL token) requires a separate mint vault controlled by program.
-    // Initialize Deposit Vault creates a vault of a particular mint controlled by the program
-    // This function does not take in the deposit. Only prepares a token account controlled by the program
-    // to receive the deposit once a deposit asset to mint bond has been confirmed.
+    // Create a program controlled stablecoin vault. Could be of any mint. 
+    // Mint address is the seed. Bump is to be provided by client.
+    // Such account is used to pay for 
 
-    pub fn initialize_deposit_vault(
-        ctx: Context<InitializeDepositVault>,
+    pub fn initialize_program_vault(
+        _ctx: Context<InitializeProgramVault>,
+        _vault_nonce: u8,
     ) -> ProgramResult {
-        let (vault_authority, vault_bump_seed) = Pubkey::find_program_address(
-            &[&ctx.accounts.vault_mint.to_account_info().key.to_bytes()],
-            ctx.program_id
-        );
-
-        let seeds = &[
-            &ctx.accounts.vault_mint.to_account_info().key.to_bytes(),
-            &[vault_bump_seed][..],
-        ];
-
-        if *ctx.accounts.authority.key !=  vault_authority {
-            return Err(ErrorCode::InvalidVaultAuthority.into());
-        }
-        
-        let vault = &mut ctx.accounts.vault;
-        vault.is_initialized = true;
-        vault.vault_bump = vault_bump_seed;
-        vault.vault_mint = *ctx.accounts.vault_mint.to_account_info().key;
-        vault.authority = *ctx.accounts.authority.key;
-
-        Ok(())
-    }
-
-    // Mint a bond based the specific vault mint of the deposited asset
-    // & maturity date of the option. Option quotes are grabbed from client side
-    // and double checked via IOC Limit order on serum orderbook
-
-    // 
-    pub fn mint_bond(
-        ctx: Context<MintBond>,
-    ) -> ProgramResult {
-        
         Ok(())
     }
 
@@ -188,14 +155,6 @@ pub mod sollar_protocol {
         };
 
         solana_program::program::invoke(&ix, &account_infos)
-    }
-
-    
-    // Init option underlying asset mint vault, and Sollar bond vault
-    // Currently only init the option asset mint vault but TODO as adding deposit 
-    pub fn init_program_vaults(_ctx: Context<InitProgramVaults>, ) -> ProgramResult {
-        
-        Ok(())
     }
 
     // mint call option contract 
@@ -421,6 +380,62 @@ pub mod sollar_protocol {
             ],
             &[vault_authority_seeds],
         )?;
+
+        Ok(())
+    }
+
+    // create open order accounts to place orders on serum Market
+
+    pub fn init_open_order_account(
+        ctx:Context<InitOpenOrderAccount>
+    ) -> ProgramResult {
+        Ok(())
+    }
+    // Mint a bond based the specific vault mint of the deposited asset
+    // & maturity date of the option. Option quotes are grabbed from client side
+    // and double checked via IOC Limit order on serum orderbook
+    
+    pub fn transfer_asset_to_vault(
+        ctx: Context<TransferAssetToVault>,
+        underlying_asset_amount: u64,
+    ) -> ProgramResult {
+        
+        let transfer_cpi_accounts = Transfer{
+            from: ctx.accounts.underlying_asset_src.to_account_info(),
+            to: ctx.accounts.mint_option_asset_vault.to_account_info(),
+            authority: ctx.accounts.user.clone(),
+        };
+
+        let cpi_token_program = ctx.accounts.token_program.clone();
+        let cpi_ctx = CpiContext::new(cpi_token_program, transfer_cpi_accounts);
+
+        token::transfer(cpi_ctx, underlying_asset_amount)?;
+
+        Ok(())
+    }
+    // 
+    pub fn mint_bond(
+        ctx: Context<MintBond>,
+        underlying_asset_amount: u64,
+    ) -> ProgramResult {
+        
+        // the vault for the asset is the same as the option underlying vault
+ 
+        let transfer_cpi_accounts = Transfer{
+            from: ctx.accounts.underlying_asset_src.to_account_info(),
+            to: ctx.accounts.mint_option_asset_vault.to_account_info(),
+            authority: ctx.accounts.user.clone(),
+        };
+
+        let cpi_token_program = ctx.accounts.token_program.clone();
+        let cpi_ctx = CpiContext::new(cpi_token_program, transfer_cpi_accounts);
+
+        token::transfer(cpi_ctx, underlying_asset_amount)?;
+
+        // If transfer successful, place order.
+        // If place orders successful, mint bond.
+        // If either fails, refund the asset back to user.
+
 
         Ok(())
     }

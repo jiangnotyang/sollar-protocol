@@ -28,21 +28,38 @@ pub struct InitializeProgram<'info> {
 #[instruction(
     vault_nonce: u8
 )]
-pub struct InitializeDepositVault<'info>{
-    pub authority: AccountInfo<'info>,
-    #[account(signer)]
-    pub vault: Account<'info, Vault>,
-    #[account(mut)]
-    pub vault_mint: Account<'info, Mint>,
-    #[account(mut)]
-    pub vault_mint_account: Account<'info, TokenAccount>,
+pub struct InitializeProgramVault<'info>{
+    #[account(mut, signer)]
+    pub user: AccountInfo<'info>,
+    pub vault_mint: Box<Account<'info, Mint>>,
+    #[account(
+        init, 
+        payer = user,
+        seeds = [&vault_mint.key().to_bytes()[..], b"vault"],
+        bump = vault_nonce,
+        token::mint = vault_mint,
+        token::authority = vault_authority
+    )]
+    pub vault: Box<Account<'info, TokenAccount>>,
+    pub vault_authority: AccountInfo<'info>,
+    pub system_program: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
+    pub rent: Sysvar<'info, Rent>,
 }
 
 #[derive(Accounts)]
 pub struct MintBond<'info>{
-    pub user: Signer<'info>,
+    #[account(mut, signer)]
+    pub user: AccountInfo<'info>,
     pub psy_american_program: AccountInfo<'info>,
+
+    pub underlying_asset_mint: AccountInfo<'info>,
+    #[account(mut)]
+    pub mint_option_asset_vault: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub underlying_asset_src: Box<Account<'info, TokenAccount>>,
+
+    pub token_program: AccountInfo<'info>,
 
 }
 
@@ -221,7 +238,6 @@ pub struct PlaceOrder<'info>{
 
     #[account(mut)]
     pub vault_authority: AccountInfo<'info>,
-
     #[account(mut)]
     pub request_queue: AccountInfo<'info>,
     #[account(mut)]
@@ -234,10 +250,36 @@ pub struct PlaceOrder<'info>{
     pub coin_vault: AccountInfo<'info>,
     #[account(mut)]
     pub pc_vault: AccountInfo<'info>,
-
     pub system_program: AccountInfo<'info>,
     pub token_program: AccountInfo<'info>,
     pub rent: Sysvar<'info, Rent>,
+}
 
+#[derive(Accounts)]
+pub struct InitOpenOrderAccount<'info>{
+    pub user_authority: AccountInfo<'info>,
+}
 
+#[derive(Accounts)]
+pub struct TransferAssetToVault<'info> {
+    #[account(mut, signer)]
+    pub user: AccountInfo<'info>,
+
+    #[account(mut)]
+    pub underlying_asset_src: Box<Account<'info, TokenAccount>>,
+    pub underlying_asset_mint: Box<Account<'info, Mint>>,
+    #[account(
+        init,
+        seeds = [&underlying_asset_mint.key().to_bytes()[..], b"vault"],
+        bump, 
+        payer = user,
+        token::mint = underlying_asset_mint,
+        token::authority = vault_authority
+    )]
+    pub mint_option_asset_vault: Box<Account<'info, TokenAccount>>,
+    pub vault_authority: AccountInfo<'info>,
+
+    pub token_program: AccountInfo<'info>,
+    pub rent: Sysvar<'info, Rent>,
+    pub system_program: AccountInfo<'info>,
 }
