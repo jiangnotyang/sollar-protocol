@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::dex::serum_dex::instruction::NewOrderInstructionV1;
-use anchor_spl::token::{self, Transfer};
+use anchor_spl::token::{self, Transfer, InitializeMint};
 use errors::ErrorCode;
 use anchor_lang::InstructionData;
 use context::*;
@@ -391,9 +391,7 @@ pub mod sollar_protocol {
     ) -> ProgramResult {
         Ok(())
     }
-    // Mint a bond based the specific vault mint of the deposited asset
-    // & maturity date of the option. Option quotes are grabbed from client side
-    // and double checked via IOC Limit order on serum orderbook
+    // TO DO: transfer this to client side. 
     
     pub fn transfer_asset_to_vault(
         ctx: Context<TransferAssetToVault>,
@@ -416,27 +414,35 @@ pub mod sollar_protocol {
     // 
     pub fn mint_bond(
         ctx: Context<MintBond>,
-        underlying_asset_amount: u64,
+        bond_mint_bump: u8,
+        bond_mint_auth_bump: u8,
+        mint_authority_bump: u8,
+        price_of_asset: u64,
+        price_of_call_sold: u64,
+        price_of_put_bought: u64,
+        strike_price: u64,
+        expected_maturity_unix_timestamp: u64,
     ) -> ProgramResult {
+        let bond_mint_id = Pubkey::find_program_address(
+            &[&expected_maturity_unix_timestamp.to_le_bytes()[..]], 
+            ctx.program_id
+        );
+
+        let (bond_mint_authority, bond_mint_authority_nonce) = Pubkey::find_program_address(
+            &[&expected_maturity_unix_timestamp.to_le_bytes()[..], b"bondAuthority"],
+            ctx.program_id,
+        );
+        let clock = &ctx.accounts.clock;
+        let current_unix_time_stamp = clock.unix_timestamp;
         
-        // the vault for the asset is the same as the option underlying vault
- 
-        let transfer_cpi_accounts = Transfer{
-            from: ctx.accounts.underlying_asset_src.to_account_info(),
-            to: ctx.accounts.mint_option_asset_vault.to_account_info(),
-            authority: ctx.accounts.user.clone(),
-        };
-
-        let cpi_token_program = ctx.accounts.token_program.clone();
-        let cpi_ctx = CpiContext::new(cpi_token_program, transfer_cpi_accounts);
-
-        token::transfer(cpi_ctx, underlying_asset_amount)?;
-
-        // If transfer successful, place order.
-        // If place orders successful, mint bond.
-        // If either fails, refund the asset back to user.
 
 
+
+        let seeds = &[
+            &expected_maturity_unix_timestamp.to_le_bytes()[..],
+            b"bondAuthority", 
+            &[bond_mint_auth_bump]
+        ];
         Ok(())
     }
 

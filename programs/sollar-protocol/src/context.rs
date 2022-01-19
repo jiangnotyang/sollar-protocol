@@ -48,6 +48,11 @@ pub struct InitializeProgramVault<'info>{
 }
 
 #[derive(Accounts)]
+#[instruction(
+    expected_maturity_unix_timestamp: u64,
+    bond_mint_bump: u8,
+)]
+    
 pub struct MintBond<'info>{
     #[account(mut, signer)]
     pub user: AccountInfo<'info>,
@@ -58,8 +63,24 @@ pub struct MintBond<'info>{
     pub mint_option_asset_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut)]
     pub underlying_asset_src: Box<Account<'info, TokenAccount>>,
-
+    #[account(
+        init,
+        payer = user,
+        seeds = [&expected_maturity_unix_timestamp.to_le_bytes()[..]],
+        bump = bond_mint_bump,
+        mint::authority = bond_mint_authority,
+        mint::decimals = 0,
+    )]
+    pub bond_mint: Account<'info, Mint>,
+    pub bond_mint_authority: AccountInfo<'info>,
+    
+    pub dest_bond_account: Box<Account<'info, TokenAccount>>,
+    pub writer_token_account: Box<Account<'info, TokenAccount>>,
+    
     pub token_program: AccountInfo<'info>,
+    pub system_program: AccountInfo<'info>,
+    pub rent: Sysvar<'info, Rent>,
+    pub clock: Sysvar<'info, Clock>,
 
 }
 
