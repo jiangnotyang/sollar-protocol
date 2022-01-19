@@ -174,7 +174,7 @@ export const createMinter = async (
 ) => {
   const transaction = new Transaction();
 
-  const underlyingAccount = new Keypair();
+  const underlyingAccount = anchor.web3.Keypair.generate();
   const assetPoolRentBalance =
     await connection.getMinimumBalanceForRentExemption(AccountLayout.span);
   transaction.add(
@@ -195,7 +195,7 @@ export const createMinter = async (
     )
   );
 
-  const quoteAccount = new Keypair();
+  const quoteAccount = anchor.web3.Keypair.generate();
   transaction.add(
     SystemProgram.createAccount({
       fromPubkey: minter.publicKey,
@@ -215,7 +215,7 @@ export const createMinter = async (
   );
 
   // create an associated token account to hold the options
-  const optionAccount = new Keypair();
+  const optionAccount = anchor.web3.Keypair.generate();
   transaction.add(
     SystemProgram.createAccount({
       fromPubkey: minter.publicKey,
@@ -235,7 +235,7 @@ export const createMinter = async (
   );
 
   // create an associated token account to hold the writer tokens
-  const writerTokenAccount = new Keypair();
+  const writerTokenAccount = anchor.web3.Keypair.generate();
   transaction.add(
     SystemProgram.createAccount({
       fromPubkey: minter.publicKey,

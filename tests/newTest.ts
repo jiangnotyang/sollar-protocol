@@ -36,6 +36,8 @@ exerciseFeeKey: PublicKey;
 let size = new u64(1);
 
 describe("exercising an option", () => {
+	anchor.setProvider(anchor.Provider.env());
+
   const provider = anchor.Provider.env();
 	const payer = anchor.web3.Keypair.generate();
 	const user = anchor.web3.Keypair.generate();
@@ -43,14 +45,13 @@ describe("exercising an option", () => {
 
 	const sollarProgram = anchor.workspace.SollarProtocol as anchor.Program;
 	const psyAmericanProgram = anchor.workspace.PsyAmerican as anchor.Program;
-	anchor.setProvider(provider);
-
-	before(async () => {
+	it("sets up various transactions", async () => {
 		await provider.connection.confirmTransaction(
 			await provider.connection.requestAirdrop(
 				payer.publicKey,
 				10_000_000_000
 			),
+			//@ts-ignore
 			"confirmed"
 		);
 
@@ -59,6 +60,7 @@ describe("exercising an option", () => {
 				user.publicKey,
 				10_000_000_000
 			),
+			//@ts-ignore
 			"confirmed"
 		);
 			
@@ -81,6 +83,7 @@ describe("exercising an option", () => {
 		optionMarket = newOptionMarket;
 		remainingAccounts = _remainingAccounts;
 		underlyingToken = _underlyingToken;
+		console.log("setup works so far");
 
 		await initOptionMarket(
 			psyAmericanProgram,
@@ -128,31 +131,32 @@ describe("exercising an option", () => {
 			new anchor.BN(25),
 			optionMarket,
 		);
-		it("should initialize option vault", async() => {
-			const size = new anchor.BN(1);
-			const textEncoder = new TextEncoder();
-			const [vault, _vaultBump] = await PublicKey.findProgramAddress(
-				[optionMarket.optionMint.toBuffer(), textEncoder.encode("vault")],
-				sollarProgram.programId,
-			);
+	});
+	it("should initialize option vault", async() => {
+		const size = new anchor.BN(1);
+		const textEncoder = new TextEncoder();
+		const [vault, _vaultBump] = await PublicKey.findProgramAddress(
+			[optionMarket.optionMint.toBuffer(), textEncoder.encode("vault")],
+			sollarProgram.programId,
+		);
 
-			[vaultAuthority, vaultAuthorityBump] = await PublicKey.findProgramAddress(
-				[optionMarket.key.toBuffer(), textEncoder.encode("vaultAuthority")],
-				sollarProgram.programId,
-			);
-			await sollarProgram.rpc.initializeOptionVault(size, {
-				accounts: {
-					authority: user.publicKey,
-					optionSource: userOptionAccount.publicKey,
-					optionMint: optionMarket.optionMint,
-					vault,
-					vaultAuthority,
-					tokenProgram: TOKEN_PROGRAM_ID,
-					rent: SYSVAR_RENT_PUBKEY,
-					systemProgram: SystemProgram.programId,
-				},
-				signers: [user]
-			});
+		[vaultAuthority, vaultAuthorityBump] = await PublicKey.findProgramAddress(
+			[optionMarket.key.toBuffer(), textEncoder.encode("vaultAuthority")],
+			sollarProgram.programId,
+		);
+		await sollarProgram.rpc.initOptionVault(size, {
+			accounts: {
+				authority: user.publicKey,
+				optionSource: userOptionAccount.publicKey,
+				optionMint: optionMarket.optionMint,
+				vault,
+				vaultAuthority,
+				tokenProgram: TOKEN_PROGRAM_ID,
+				rent: SYSVAR_RENT_PUBKEY,
+				systemProgram: SystemProgram.programId,
+			},
+			signers: [user]
 		});
+
 	});
 })
