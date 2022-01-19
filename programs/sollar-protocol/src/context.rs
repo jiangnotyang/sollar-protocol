@@ -152,6 +152,29 @@ pub struct InitOrderVault<'info> {
 }
 
 #[derive(Accounts)]
+pub struct InitializeOptionVault<'info>{
+    #[account(mut, signer)]
+    pub authority: AccountInfo<'info>,
+    #[account(mut)]
+    pub option_source: Box<Account<'info, TokenAccount>>,
+    pub option_mint: AccountInfo<'info>,
+
+    #[account(
+        init,
+        seeds = [&option_mint.key().to_bytes()[..], b"vault"],
+        bump,
+        payer = authority,
+        token::mint = option_mint,
+        token::authority = vault_authority
+    )]
+    pub vault: Box<Account<'info, TokenAccount>>,
+    pub vault_authority: AccountInfo<'info>,
+    pub token_program: AccountInfo<'info>,
+    pub rent: Sysvar<'info, Rent>,
+    pub system_program: AccountInfo<'info>,
+}
+
+#[derive(Accounts)]
 pub struct PlaceOrder<'info>{
     #[account(mut)]
     pub user_authority: Signer<'info>,

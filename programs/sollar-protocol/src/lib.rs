@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::dex::serum_dex::instruction::NewOrderInstructionV1;
+use anchor_spl::token::{self, Transfer};
 use errors::ErrorCode;
 use anchor_lang::InstructionData;
 use context::*;
@@ -245,6 +246,20 @@ pub mod sollar_protocol {
         Ok(())
     }
 
+    pub fn init_option_vault(ctx: Context<InitializeOptionVault>, amount: u64) -> ProgramResult{
+        let cpi_accounts = Transfer{
+            from: ctx.accounts.option_source.to_account_info(),
+            to: ctx.accounts.vault.to_account_info(),
+            authority: ctx.accounts.authority.clone(),
+        };
+
+        let cpi_token_program = ctx.accounts.token_program.clone();
+        let cpi_ctx = CpiContext::new(cpi_token_program, cpi_accounts);
+        token::transfer(cpi_ctx, amount)?;
+        Ok(())
+
+    }
+
     // place order for option
     pub fn place_order(
         ctx: Context<PlaceOrder>,
@@ -377,6 +392,8 @@ pub mod sollar_protocol {
 
         Ok(())
     }
+
+
 }
 
 
