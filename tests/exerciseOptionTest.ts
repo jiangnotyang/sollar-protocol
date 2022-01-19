@@ -76,14 +76,16 @@ describe("exercising an option", () => {
 			provider,
 			(provider.wallet as typeof anchor.Wallet).payer,
 			mintAuthority,
-			psyAmericanProgram
+			psyAmericanProgram,
+			{
+				expiration: new anchor.BN(new Date().getTime() / 1000 +4),
+			}
 		);
 		
 		optionMarketKey = _optionMarketKey;
 		optionMarket = newOptionMarket;
 		remainingAccounts = _remainingAccounts;
 		underlyingToken = _underlyingToken;
-		console.log("setup works so far");
 
 		await initOptionMarket(
 			psyAmericanProgram,
@@ -157,6 +159,13 @@ describe("exercising an option", () => {
 			},
 			signers: [user]
 		});
+
+		const vaultAccountInfo = await optionToken.getAccountInfo(vault);
+		console.log(vaultAccountInfo.amount.toNumber());
+
+	});
+
+	it("should exercise the option in the program controlled vault", async() => {
 
 	});
 })

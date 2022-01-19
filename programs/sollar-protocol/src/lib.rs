@@ -257,7 +257,39 @@ pub mod sollar_protocol {
         let cpi_ctx = CpiContext::new(cpi_token_program, cpi_accounts);
         token::transfer(cpi_ctx, amount)?;
         Ok(())
+    }
 
+    pub fn exercise<'a, 'b, 'c, 'info>(ctx: Context<'a, 'b, 'c, 'info, Exercise<'info>>, vault_authority_bump: u8) -> ProgramResult {
+        let cpi_program = ctx.accounts.psy_american_program.clone();
+        let cpi_accounts = ExerciseOption{
+            user_authority: ctx.accounts.authority.to_account_info(),
+            option_authority: ctx.accounts.vault_authority.to_account_info(),
+            option_market: ctx.accounts.option_market.to_account_info(),
+            option_mint: ctx.accounts.option_mint.to_account_info(),
+            exerciser_option_token_src: ctx.accounts.exerciser_option_token_src.to_account_info(),
+            underlying_asset_pool: ctx.accounts.underlying_asset_pool.to_account_info(),
+            underlying_asset_dest: ctx.accounts.underlying_asset_dest.to_account_info(),
+            quote_asset_pool: ctx.accounts.quote_asset_pool.to_account_info(),
+            quote_asset_src: ctx.accounts.quote_asset_src.to_account_info(),
+            fee_owner: ctx.accounts.fee_owner.clone(),
+            token_program: ctx.accounts.token_program.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+            clock: ctx.accounts.clock.to_account_info(),
+        };
+        
+        let key = ctx.accounts.option_market.key();
+
+        let seeds = &[
+            key.as_ref(),
+            b"vaultAuthority", 
+            &[vault_authority_bump]
+        ];
+
+        let signer = &[&seeds[..]];
+        let mut cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
+        cpi_ctx.remaining_accounts = ctx.remaining_accounts.to_vec();
+
+        psy_american::cpi::exercise_option(cpi_ctx, ctx.accounts.exerciser_option_token_src.amount)
     }
 
     // place order for option

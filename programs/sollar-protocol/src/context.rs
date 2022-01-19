@@ -175,6 +175,30 @@ pub struct InitializeOptionVault<'info>{
 }
 
 #[derive(Accounts)]
+pub struct Exercise<'info>{
+    #[account(mut, signer)]
+    pub authority: AccountInfo<'info>,
+    pub psy_american_program: AccountInfo<'info>,
+
+    pub vault_authority: AccountInfo<'info>,
+    pub option_market: Box<Account<'info, OptionMarket>>,
+    pub option_mint: Box<Account<'info, Mint>>,
+    #[account(mut)]
+    pub exerciser_option_token_src: Box<Account<'info, TokenAccount>>,
+    pub underlying_asset_pool: Box<Account<'info, TokenAccount>>,
+    pub underlying_asset_dest: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub quote_asset_pool: Box<Account<'info, TokenAccount>>,
+    pub quote_asset_src: Box<Account<'info, TokenAccount>>,
+    #[account(mut)]
+    pub fee_owner: AccountInfo<'info>,
+
+    pub token_program: AccountInfo<'info>,
+    pub system_program: AccountInfo<'info>,
+    pub clock: Sysvar<'info, Clock>,
+}
+
+#[derive(Accounts)]
 pub struct PlaceOrder<'info>{
     #[account(mut)]
     pub user_authority: Signer<'info>,
