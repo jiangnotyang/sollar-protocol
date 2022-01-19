@@ -170,15 +170,15 @@ pub struct PlaceOrder<'info>{
 
     // USDC vault Account
     #[account(mut)]
-    vault: Box<Account<'info, TokenAccount>>,
+    pub vault: Box<Account<'info, TokenAccount>>,
 
     #[account(mut)]
     pub vault_authority: AccountInfo<'info>,
 
     #[account(mut)]
-    request_queue: AccountInfo<'info>,
+    pub request_queue: AccountInfo<'info>,
     #[account(mut)]
-    event_quene: AccountInfo<'info>,
+    pub event_queue: AccountInfo<'info>,
     #[account(mut)]
     pub market_bids: AccountInfo<'info>,
     #[account(mut)]

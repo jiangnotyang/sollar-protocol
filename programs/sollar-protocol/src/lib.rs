@@ -9,6 +9,7 @@ use anchor_spl::dex::serum_dex;
 use anchor_spl::dex::serum_dex::{instruction::SelfTradeBehavior as SerumSelfTradeBehavior, matching::{OrderType as SerumOrderType, Side as SerumSide}};
 use psy_american::OptionMarket;
 use psy_american::instruction::InitializeMarket;
+use std::num::NonZeroU64;
 
 pub mod context;
 pub mod errors;
@@ -283,9 +284,97 @@ pub mod sollar_protocol {
                 Some(ctx.accounts.psy_market_authority.key),
             )?;
             ix.program_id = *cpi_program.key;
-            msg!("ix program info {:?}", ix);
-            
+            ix.accounts[0].pubkey = ctx.accounts.open_orders.key();
+            ix.accounts[4].pubkey = ctx.accounts.psy_market_authority.key();
+            ix.accounts[4].is_signer = false;
+            ix.accounts[1].is_writable = true;
+            ix.accounts.insert(0, ctx.accounts.system_program.to_account_metas(Some(false))[0].clone());
+            ix.accounts.insert(0, ctx.accounts.dex_program.to_account_metas(Some(false))[0].clone());
+            ix.data.insert(0, open_order_bump_init);
+            ix.data.insert(0, open_order_bump);
+            ix.data.insert(0, 0 as u8);
+            ix.data.insert(0, 0 as u8);
+            ix.accounts.insert(0, ctx.accounts.dex_program.to_account_metas(Some(false))[0].clone());
+            let vault_key = ctx.accounts.vault.key();
+            let vault_authority_seeds =  &[
+                vault_key.as_ref(),
+                b"usdcVaultAuthority",
+                &[vault_authority_bump]
+            ];
+
+            solana_program::program::invoke_signed(
+                &ix,
+                &[
+                    ctx.accounts.psy_american_program.to_account_info(),
+                    ctx.accounts.dex_program.to_account_info(),
+                    ctx.accounts.open_orders.to_account_info(),
+                    ctx.accounts.vault_authority.to_account_info(),
+                    ctx.accounts.market.to_account_info(),
+                    ctx.accounts.psy_market_authority.to_account_info(),
+                    ctx.accounts.system_program.to_account_info(),
+                    ctx.accounts.rent.to_account_info()
+                ],
+                &[vault_authority_seeds],
+            )?;
+
         }
+
+        let mut new_order_ix = serum_dex::instruction::new_order(
+            ctx.accounts.market.key,
+            ctx.accounts.open_orders.key,
+            ctx.accounts.request_queue.key,
+            ctx.accounts.event_queue.key,
+            ctx.accounts.market_bids.key,
+            ctx.accounts.market_asks.key,
+            &ctx.accounts.vault.key(),
+            ctx.accounts.vault_authority.key,
+            ctx.accounts.coin_vault.key,
+            ctx.accounts.pc_vault.key,
+            ctx.accounts.token_program.key,
+            &ctx.accounts.rent.key(),
+            None,
+            ctx.accounts.dex_program.key,
+            side.into(),
+            NonZeroU64::new(limit_price).unwrap(),
+            NonZeroU64::new(max_coin_qty).unwrap(),
+            order_type.into(),
+            client_order_id,
+            self_trade_behaviour.into(),
+            limit,
+            NonZeroU64::new(max_native_pc_qty_including_fees).unwrap()
+        )?;
+
+
+        new_order_ix.program_id = *cpi_program.key;
+        new_order_ix.data.insert(0, 1 as u8);
+        new_order_ix.data.insert(0, 1 as u8);
+        new_order_ix.accounts.insert(0, ctx.accounts.dex_program.to_account_metas(Some(false))[0].clone());
+        let vault_key = ctx.accounts.vault.key();
+        let vault_authority_seeds = &[
+            vault_key.as_ref(),
+            b"usdcVaultAuthority",
+            &[vault_authority_bump]
+        ];
+
+        solana_program::program::invoke_signed(
+            &new_order_ix,
+            &[
+                ctx.accounts.market.to_account_info(),
+                ctx.accounts.open_orders.to_account_info(),
+                ctx.accounts.request_queue.to_account_info(),
+                ctx.accounts.event_queue.to_account_info(),
+                ctx.accounts.market_bids.to_account_info(),
+                ctx.accounts.market_asks.to_account_info(),
+                ctx.accounts.vault.to_account_info(),
+                ctx.accounts.vault_authority.to_account_info(),
+                ctx.accounts.coin_vault.to_account_info(),
+                ctx.accounts.pc_vault.to_account_info(),
+                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.rent.to_account_info(),
+            ],
+            &[vault_authority_seeds],
+        )?;
+
         Ok(())
     }
 }
