@@ -18,8 +18,25 @@ import { initOptionMarket, initSetup, createMinter } from "../utils/helpers";
 import { mintOptionsTx } from "../psyoptions-ts/src";
 import { Market } from "../psyoptions-ts/src";
 
+// Some global variables
+let underlyingToken: Token,
+optionToken: Token,
+optionMarketKey: PublicKey,
+remainingAccounts: AccountMeta[] = [],
+optionMarket: OptionMarketV2,
+vaultAccount: AccountInfo,
+userWriterAccount: Keypair,
+userOptionAccount: Keypair,
+userUnderlyingAccount: Keypair,
+userQuoteAccount: Keypair,
+vaultAuthority: PublicKey,
+vaultAuthorityBump: number,
+exerciseFeeKey: PublicKey;
+
+let size = new u64(1);
+
 describe("exercising an option", () => {
-	const provider = anchor.Provider.env();
+  const provider = anchor.Provider.env();
 	const payer = anchor.web3.Keypair.generate();
 	const user = anchor.web3.Keypair.generate();
 	const mintAuthority = anchor.web3.Keypair.generate();
@@ -28,22 +45,6 @@ describe("exercising an option", () => {
 	const psyAmericanProgram = anchor.workspace.PsyAmerican as anchor.Program;
 	anchor.setProvider(provider);
 
-	// Some global variables
-	let underlyingToken: Token,
-		optionToken: Token,
-		optionMarketKey: PublicKey,
-		remainingAccounts: AccountMeta[] = [],
-		optionMarket: OptionMarketV2,
-		vaultAccount: AccountInfo,
-		userWriterAccount: Keypair,
-		userOptionAccount: Keypair,
-		userUnderlyingAccount: Keypair,
-		userQuoteAccount: Keypair,
-		vaultAuthority: PublicKey,
-		vaultAuthorityBump: number,
-		exerciseFeeKey: PublicKey;
-	
-	let size = new u64(1);
 	before(async () => {
 		await provider.connection.confirmTransaction(
 			await provider.connection.requestAirdrop(
@@ -155,4 +156,3 @@ describe("exercising an option", () => {
 		});
 	});
 })
-
