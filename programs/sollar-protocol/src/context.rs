@@ -276,10 +276,6 @@ pub struct PlaceOrder<'info>{
     pub rent: Sysvar<'info, Rent>,
 }
 
-#[derive(Accounts)]
-pub struct InitOpenOrderAccount<'info>{
-    pub user_authority: AccountInfo<'info>,
-}
 
 #[derive(Accounts)]
 pub struct TransferAssetToVault<'info> {

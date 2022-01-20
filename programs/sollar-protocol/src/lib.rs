@@ -78,7 +78,7 @@ pub mod sollar_protocol {
         Ok(())
     }
 
-    // Create a program controlled stablecoin vault. Could be of any mint. 
+    // Create a program controlled stablecoin vault. Could be of any mint. USDC as example
     // Mint address is the seed. Bump is to be provided by client.
     // Such account is used to pay for 
 
@@ -383,14 +383,7 @@ pub mod sollar_protocol {
 
         Ok(())
     }
-
-    // create open order accounts to place orders on serum Market
-
-    pub fn init_open_order_account(
-        ctx:Context<InitOpenOrderAccount>
-    ) -> ProgramResult {
-        Ok(())
-    }
+    
     // TO DO: transfer this to client side. 
     
     pub fn transfer_asset_to_vault(
@@ -432,11 +425,9 @@ pub mod sollar_protocol {
             &[&expected_maturity_unix_timestamp.to_le_bytes()[..], b"bondAuthority"],
             ctx.program_id,
         );
+
         let clock = &ctx.accounts.clock;
         let current_unix_time_stamp = clock.unix_timestamp;
-        
-
-
 
         let seeds = &[
             &expected_maturity_unix_timestamp.to_le_bytes()[..],
